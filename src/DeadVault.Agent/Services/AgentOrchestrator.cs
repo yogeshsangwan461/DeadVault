@@ -67,9 +67,11 @@ public class AgentOrchestrator
 
         _projects[project.Id] = project;
 
-        var debouncer = new DebounceService(
-            TimeSpan.FromSeconds(project.DebounceSeconds),
-            () => OnDebounceElapsedAsync(project));
+        var delay = project.DebounceSeconds <= 0
+            ? Timeout.InfiniteTimeSpan
+            : TimeSpan.FromSeconds(project.DebounceSeconds);
+
+        var debouncer = new DebounceService(delay, () => OnDebounceElapsedAsync(project));
 
         var watcher = new FileWatcherService(project.FolderPath, debouncer.Signal);
         watcher.Start();
@@ -77,7 +79,8 @@ public class AgentOrchestrator
         _watchers[project.Id] = watcher;
         _debouncers[project.Id] = debouncer;
 
-        VaultLogger.Info($"Started watching: {project.Name} (debounce: {project.DebounceSeconds}s)");
+        var debounceLabel = project.DebounceSeconds <= 0 ? "disabled" : $"{project.DebounceSeconds}s";
+        VaultLogger.Info($"Started watching: {project.Name} (debounce: {debounceLabel})");
     }
 
     private void StopWatching(string projectId)

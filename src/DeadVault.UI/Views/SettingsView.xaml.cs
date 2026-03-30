@@ -27,7 +27,14 @@ public partial class SettingsView : UserControl
         InitializeComponent();
 
         DebounceSlider.ValueChanged += (s, e) =>
+        {
+            if (DisableAutoVersioningCheck.IsChecked == true)
+                return;
             DebounceValueText.Text = $"{(int)DebounceSlider.Value}s";
+        };
+
+        DisableAutoVersioningCheck.Checked += (s, e) => UpdateDebounceUi();
+        DisableAutoVersioningCheck.Unchecked += (s, e) => UpdateDebounceUi();
 
         Loaded += async (s, e) => await Initialize();
     }
@@ -68,16 +75,30 @@ public partial class SettingsView : UserControl
             exclusions = ProjectConfig.GetDefaultExclusions();
         ExclusionsList.ItemsSource = exclusions;
 
-        DebounceSlider.Value = _currentProject.DebounceSeconds;
-        DebounceValueText.Text = $"{_currentProject.DebounceSeconds}s";
-        AttributionSelector.SelectedItem = _currentProject.AttributionAuthor switch
+        DisableAutoVersioningCheck.IsChecked = _currentProject.DebounceSeconds <= 0;
+        DebounceSlider.Value = _currentProject.DebounceSeconds > 0 ? _currentProject.DebounceSeconds : 60;
+        UpdateDebounceUi();
+
+        var (authorKind, authorDetail) = AttributionAuthorKinds.Parse(_currentProject.AttributionAuthor);
+        authorKind = AttributionAuthorKinds.NormalizeKind(authorKind);
+
+        AttributionSelector.SelectedItem = authorKind switch
         {
             AttributionAuthorKinds.AI => "AI",
             AttributionAuthorKinds.Mixed => "Mixed",
             _ => "Human",
         };
+        AttributionDetailBox.Text = authorDetail ?? string.Empty;
+
         EnableWatermarkingCheck.IsChecked = _currentProject.EnableTextWatermarking;
         AttributionBudgetText.Text = $"Text watermark budget: {_currentProject.AttributionTextBudgetBytes / (1024 * 1024)} MB per snapshot";
+    }
+
+    private void UpdateDebounceUi()
+    {
+        bool disabled = DisableAutoVersioningCheck.IsChecked == true;
+        DebounceSlider.IsEnabled = !disabled;
+        DebounceValueText.Text = disabled ? "Disabled" : $"{(int)DebounceSlider.Value}s";
     }
 
     private void AddExclusion_Click(object sender, RoutedEventArgs e)
@@ -132,7 +153,9 @@ public partial class SettingsView : UserControl
     private async void SaveDebounce_Click(object sender, RoutedEventArgs e)
     {
         if (_currentProject == null) return;
-        _currentProject.DebounceSeconds = (int)DebounceSlider.Value;
+        _currentProject.DebounceSeconds = DisableAutoVersioningCheck.IsChecked == true
+            ? 0
+            : (int)DebounceSlider.Value;
 
         try
         {
@@ -141,7 +164,8 @@ public partial class SettingsView : UserControl
             {
                 Command = Core.Ipc.IpcMessage.Commands.ReloadConfig
             });
-            MessageBox.Show($"Debounce set to {_currentProject.DebounceSeconds}s.", "Settings",
+            var label = _currentProject.DebounceSeconds <= 0 ? "disabled" : $"{_currentProject.DebounceSeconds}s";
+            MessageBox.Show($"Auto-version delay set to {label}.", "Settings",
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
@@ -155,17 +179,27 @@ public partial class SettingsView : UserControl
     {
         if (_currentProject == null) return;
 
-        _currentProject.AttributionAuthor = AttributionSelector.SelectedItem switch
+        var kind = AttributionSelector.SelectedItem switch
         {
             "AI" => AttributionAuthorKinds.AI,
             "Mixed" => AttributionAuthorKinds.Mixed,
             _ => AttributionAuthorKinds.Human,
         };
+        var detail = AttributionDetailBox.Text.Trim();
+        _currentProject.AttributionAuthor = AttributionAuthorKinds.NormalizeWithDetail(
+            string.IsNullOrWhiteSpace(detail) ? kind : $"{kind}:{detail}");
         _currentProject.EnableTextWatermarking = EnableWatermarkingCheck.IsChecked == true;
 
         try
         {
             await _store.UpdateProjectAsync(_currentProject);
+
+            // Apply changes immediately for the agent.
+            await _pipeClient.SendCommandAsync(new Core.Ipc.IpcMessage
+            {
+                Command = Core.Ipc.IpcMessage.Commands.ReloadConfig
+            });
+
             MessageBox.Show("Attribution settings saved.", "Settings",
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }

@@ -21,7 +21,7 @@ public class AttributionService
         IReadOnlyCollection<string> changedPaths,
         string authorKind)
     {
-        authorKind = AttributionAuthorKinds.Normalize(authorKind);
+        authorKind = AttributionAuthorKinds.NormalizeWithDetail(authorKind);
 
         if (!project.EnableTextWatermarking || changedPaths.Count == 0)
             return new SnapshotAttributionSummary { PrimaryAuthor = authorKind };
@@ -109,7 +109,7 @@ public class AttributionService
         {
             var trimmed = line.Trim();
             if (trimmed.StartsWith("DeadVault-Author:", StringComparison.OrdinalIgnoreCase))
-                summary.PrimaryAuthor = AttributionAuthorKinds.Normalize(Value(trimmed));
+                summary.PrimaryAuthor = AttributionAuthorKinds.NormalizeWithDetail(Value(trimmed));
             else if (trimmed.StartsWith("DeadVault-Human-Files:", StringComparison.OrdinalIgnoreCase))
                 summary.HumanFiles = ParseInt(Value(trimmed));
             else if (trimmed.StartsWith("DeadVault-AI-Files:", StringComparison.OrdinalIgnoreCase))
@@ -175,7 +175,7 @@ public class AttributionService
             }
         }
 
-        return AttributionAuthorKinds.Normalize(project.AttributionAuthor);
+        return AttributionAuthorKinds.NormalizeWithDetail(project.AttributionAuthor);
     }
 
     private static AttributionManifest LoadManifestFromFile(string path)
@@ -212,7 +212,7 @@ public class AttributionService
 
     private static void Count(SnapshotAttributionSummary summary, string authorKind)
     {
-        switch (AttributionAuthorKinds.Normalize(authorKind))
+        switch (AttributionAuthorKinds.NormalizeKind(authorKind))
         {
             case AttributionAuthorKinds.Human:
                 summary.HumanFiles++;
@@ -234,6 +234,9 @@ public class AttributionService
 
     private static string SelectPrimaryAuthor(SnapshotAttributionSummary summary, string fallback)
     {
+        var normalizedFallback = AttributionAuthorKinds.NormalizeWithDetail(fallback);
+        var fallbackKind = AttributionAuthorKinds.NormalizeKind(normalizedFallback);
+
         var ranked = new Dictionary<string, int>
         {
             [AttributionAuthorKinds.Human] = summary.HumanFiles,
@@ -248,13 +251,19 @@ public class AttributionService
             .ThenBy(pair => pair.Key, StringComparer.Ordinal)
             .FirstOrDefault();
 
-        return best.Value > 0 ? best.Key : AttributionAuthorKinds.Normalize(fallback);
+        if (best.Value <= 0)
+            return normalizedFallback;
+
+        // If the dominant kind matches the declared author kind, keep the detail (e.g. "ai:gpt-5.4").
+        return string.Equals(best.Key, fallbackKind, StringComparison.OrdinalIgnoreCase)
+            ? normalizedFallback
+            : best.Key;
     }
 
     private static string ComputeWatermark(string content, string path, string authorKind)
     {
         var normalized = NormalizeLineEndings(content);
-        var payload = $"{AttributionAuthorKinds.Normalize(authorKind)}|{path}|{normalized}";
+        var payload = $"{AttributionAuthorKinds.NormalizeWithDetail(authorKind)}|{path}|{normalized}";
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload)));
         return $"dvwm1-{hash[..12].ToLowerInvariant()}";
     }

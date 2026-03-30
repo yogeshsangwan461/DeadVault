@@ -33,6 +33,7 @@ public class AttributionServiceTests
     [Theory]
     [InlineData("human", AttributionAuthorKinds.Human)]
     [InlineData("AI", AttributionAuthorKinds.AI)]
+    [InlineData("AI:gpt-5.4", AttributionAuthorKinds.AI)]
     [InlineData(" mixed ", AttributionAuthorKinds.Mixed)]
     [InlineData("who-knows", AttributionAuthorKinds.Unknown)]
     public void NormalizeAuthor_ProducesExpectedValue(string input, string expected)
@@ -45,7 +46,7 @@ public class AttributionServiceTests
     {
         var project = new ProjectConfig
         {
-            DebounceSeconds = 0,
+            DebounceSeconds = -1,
             SessionTimeoutMinutes = 0,
             AttributionAuthor = "mystery",
             AttributionTextBudgetBytes = 0,
@@ -57,5 +58,13 @@ public class AttributionServiceTests
         Assert.Equal(120, project.SessionTimeoutMinutes);
         Assert.Equal(AttributionAuthorKinds.Human, project.AttributionAuthor);
         Assert.Equal(10 * 1024 * 1024, project.AttributionTextBudgetBytes);
+    }
+
+    [Fact]
+    public void ProjectConfig_Normalize_PreservesDisabledDebounce()
+    {
+        var project = new ProjectConfig { DebounceSeconds = 0 };
+        project.Normalize();
+        Assert.Equal(0, project.DebounceSeconds);
     }
 }

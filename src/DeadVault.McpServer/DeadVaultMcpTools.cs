@@ -96,16 +96,30 @@ public class DeadVaultMcpTools
         int limit = 50)
     {
         var project = await ResolveProjectAsync(projectId, projectName);
-        var normalizedAuthor = AttributionAuthorKinds.Normalize(author);
+        var normalizedAuthor = AttributionAuthorKinds.NormalizeWithDetail(author);
+        var normalizedKind = AttributionAuthorKinds.NormalizeKind(author);
+        var (_, authorDetail) = AttributionAuthorKinds.Parse(author);
+        var matchByKindOnly = string.IsNullOrWhiteSpace(authorDetail);
         var snapshots = await _snapshotManager.ListSnapshotsAsync(project, Math.Clamp(limit, 1, 200));
 
         var matches = new List<QueryChangeRecord>();
         foreach (var snapshot in snapshots)
         {
-            if (!string.Equals(snapshot.AuthorKind, normalizedAuthor, StringComparison.OrdinalIgnoreCase))
+            bool snapshotMatch = matchByKindOnly
+                ? string.Equals(AttributionAuthorKinds.NormalizeKind(snapshot.AuthorKind), normalizedKind, StringComparison.OrdinalIgnoreCase)
+                : string.Equals(AttributionAuthorKinds.NormalizeWithDetail(snapshot.AuthorKind), normalizedAuthor, StringComparison.OrdinalIgnoreCase);
+
+            if (!snapshotMatch)
             {
                 var diff = await _diffManager.GetCommitDiffAsync(project, snapshot.CommitSha);
-                if (!diff.Changes.Any(change => string.Equals(change.AuthorKind, normalizedAuthor, StringComparison.OrdinalIgnoreCase)))
+
+                bool anyMatch = matchByKindOnly
+                    ? diff.Changes.Any(change =>
+                        string.Equals(AttributionAuthorKinds.NormalizeKind(change.AuthorKind), normalizedKind, StringComparison.OrdinalIgnoreCase))
+                    : diff.Changes.Any(change =>
+                        string.Equals(AttributionAuthorKinds.NormalizeWithDetail(change.AuthorKind), normalizedAuthor, StringComparison.OrdinalIgnoreCase));
+
+                if (!anyMatch)
                     continue;
             }
 

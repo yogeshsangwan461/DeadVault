@@ -46,10 +46,15 @@ public class ProjectConfig
 
     public void Normalize()
     {
-        DebounceSeconds = Math.Clamp(DebounceSeconds <= 0 ? 60 : DebounceSeconds, 15, 600);
+        // DebounceSeconds == 0 means "disabled / infinite" (no auto-snap from file changes).
+        if (DebounceSeconds < 0)
+            DebounceSeconds = 60;
+        if (DebounceSeconds > 0)
+            DebounceSeconds = Math.Clamp(DebounceSeconds, 15, 600);
+
         SessionTimeoutMinutes = Math.Clamp(SessionTimeoutMinutes <= 0 ? 120 : SessionTimeoutMinutes, 15, 1440);
-        AttributionAuthor = AttributionAuthorKinds.Normalize(AttributionAuthor);
-        if (AttributionAuthor == AttributionAuthorKinds.Unknown)
+        AttributionAuthor = AttributionAuthorKinds.NormalizeWithDetail(AttributionAuthor);
+        if (AttributionAuthorKinds.NormalizeKind(AttributionAuthor) == AttributionAuthorKinds.Unknown)
             AttributionAuthor = AttributionAuthorKinds.Human;
 
         AttributionTextBudgetBytes = AttributionTextBudgetBytes <= 0

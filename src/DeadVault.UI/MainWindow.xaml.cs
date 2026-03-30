@@ -15,7 +15,6 @@ public partial class MainWindow : Window
     private readonly RepoManager _repoManager = new();
     private readonly SnapshotManager _snapshotManager = new();
     private readonly RestoreManager _restoreManager;
-    private readonly DiffManager _diffManager = new();
     private readonly ExportManager _exportManager = new();
     private readonly LockManager _lockManager = new();
     private readonly PipeClient _pipeClient = new();
@@ -58,7 +57,7 @@ public partial class MainWindow : Window
         ContentArea.Content = viewName switch
         {
             "Projects" => new ProjectsView(_store, _repoManager, _snapshotManager, _lockManager, this),
-            "Timeline" => new TimelineView(_store, _snapshotManager, _restoreManager, _diffManager,
+            "Timeline" => new TimelineView(_store, _snapshotManager, _restoreManager,
                                            _exportManager, _lockManager, parameter as string),
             "Settings" => new SettingsView(_store, _repoManager, _pipeClient),
             "Logs" => new LogsView(),

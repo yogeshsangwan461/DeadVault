@@ -44,13 +44,25 @@ public class SnapshotDisplay : SnapshotInfo
         }
     }
 
-    public string AuthorBadgeText => AuthorKind switch
+    public string AuthorBadgeText
     {
-        AttributionAuthorKinds.AI => "AI",
-        AttributionAuthorKinds.Mixed => "Mixed",
-        AttributionAuthorKinds.System => "System",
-        _ => "Human",
-    };
+        get
+        {
+            var (kind, detail) = AttributionAuthorKinds.Parse(AuthorKind);
+            kind = AttributionAuthorKinds.NormalizeKind(kind);
+
+            var label = kind switch
+            {
+                AttributionAuthorKinds.AI => "AI",
+                AttributionAuthorKinds.Mixed => "Mixed",
+                AttributionAuthorKinds.System => "System",
+                AttributionAuthorKinds.Human => "Human",
+                _ => "Unknown",
+            };
+
+            return string.IsNullOrWhiteSpace(detail) ? label : $"{label} ({detail})";
+        }
+    }
 }
 
 public partial class TimelineView : UserControl
@@ -58,21 +70,19 @@ public partial class TimelineView : UserControl
     private readonly IMetadataStore _store;
     private readonly ISnapshotManager _snapshotManager;
     private readonly IRestoreManager _restoreManager;
-    private readonly IDiffManager _diffManager;
     private readonly IExportManager _exportManager;
     private readonly ILockManager _lockManager;
     private ProjectConfig? _currentProject;
     private string? _initialProjectId;
 
     public TimelineView(IMetadataStore store, ISnapshotManager snapshotManager,
-                         IRestoreManager restoreManager, IDiffManager diffManager,
+                         IRestoreManager restoreManager,
                          IExportManager exportManager, ILockManager lockManager,
                          string? initialProjectId = null)
     {
         _store = store;
         _snapshotManager = snapshotManager;
         _restoreManager = restoreManager;
-        _diffManager = diffManager;
         _exportManager = exportManager;
         _lockManager = lockManager;
         _initialProjectId = initialProjectId;
@@ -150,6 +160,14 @@ public partial class TimelineView : UserControl
                 IsDemo = s.IsDemo,
                 Version = s.Version,
                 BumpKind = s.BumpKind,
+                AuthorKind = s.AuthorKind,
+                HumanFiles = s.HumanFiles,
+                AiFiles = s.AiFiles,
+                MixedFiles = s.MixedFiles,
+                SystemFiles = s.SystemFiles,
+                UnknownFiles = s.UnknownFiles,
+                WatermarkedFiles = s.WatermarkedFiles,
+                ProcessedTextBytes = s.ProcessedTextBytes,
             }).ToList();
 
             SnapshotsList.ItemsSource = displayList;
@@ -259,7 +277,6 @@ public partial class TimelineView : UserControl
 
         try
         {
-            var diffResult = await _diffManager.GetCommitDiffAsync(_currentProject, sha);
             var mainWindow = Window.GetWindow(this) as MainWindow;
             mainWindow?.NavigateTo("Diff", new DiffViewParams
             {

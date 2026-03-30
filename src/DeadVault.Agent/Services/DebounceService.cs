@@ -7,15 +7,20 @@ public class DebounceService : IDisposable
     private readonly SemaphoreSlim _executionGate = new(1, 1);
     private CancellationTokenSource? _cts;
     private readonly object _lock = new();
+    private readonly bool _disabled;
 
     public DebounceService(TimeSpan delay, Func<Task> onElapsed)
     {
         _delay = delay;
         _onElapsed = onElapsed;
+        _disabled = delay == Timeout.InfiniteTimeSpan || delay.TotalMilliseconds < 0;
     }
 
     public void Signal()
     {
+        if (_disabled)
+            return;
+
         lock (_lock)
         {
             _cts?.Cancel();
