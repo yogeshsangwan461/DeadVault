@@ -1,0 +1,76 @@
+<Window x:Class="DeadVault.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="DeadVault" Height="720" Width="1050"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource ContentBg}"
+        Closing="Window_Closing">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="210"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <Border Grid.Column="0" Background="{StaticResource SidebarBg}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Margin="20,20,20,10">
+                    <TextBlock Text="DeadVault" FontSize="22" FontWeight="Bold"
+                               Foreground="{StaticResource AccentBrush}"/>
+                    <TextBlock Text="Local Version Control" FontSize="11"
+                               Foreground="{StaticResource TextSecondary}" Margin="0,2,0,0"/>
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Bottom" Margin="12,0,12,16">
+                    <Border Background="{StaticResource CardBg}" CornerRadius="6" Padding="10,8" Margin="0,4">
+                        <StackPanel>
+                            <TextBlock Text="Agent Status" FontSize="11"
+                                       Foreground="{StaticResource TextSecondary}"/>
+                            <TextBlock Name="AgentStatusText" Text="Checking..."
+                                       FontSize="12" Foreground="{StaticResource YellowBrush}" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <ListBox Name="NavList" Margin="8,10" Background="Transparent"
+                         BorderThickness="0" SelectionChanged="NavList_SelectionChanged">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Foreground" Value="{StaticResource SidebarFg}"/>
+                            <Setter Property="FontSize" Value="14"/>
+                            <Setter Property="Padding" Value="12,10"/>
+                            <Setter Property="Margin" Value="4,2"/>
+                            <Setter Property="Cursor" Value="Hand"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="Bd" Background="Transparent"
+                                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource CardBg}"/>
+                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="#111111"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+
+                    <ListBoxItem Content="Projects" Tag="Projects" IsSelected="True"/>
+                    <ListBoxItem Content="Timeline" Tag="Timeline"/>
+                    <ListBoxItem Content="Settings" Tag="Settings"/>
+                    <ListBoxItem Content="Logs" Tag="Logs"/>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <!-- Content -->
+        <ContentControl Grid.Column="1" Name="ContentArea" Margin="0"/>
+    </Grid>
+</Window>

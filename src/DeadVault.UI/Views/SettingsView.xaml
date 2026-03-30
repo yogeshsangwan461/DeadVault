@@ -1,0 +1,126 @@
+<UserControl x:Class="DeadVault.UI.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{StaticResource ContentBg}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24">
+            <TextBlock Text="Settings" FontSize="24" FontWeight="Bold"
+                       Foreground="{StaticResource TextPrimary}" Margin="0,0,0,20"/>
+
+            <!-- Project Selector -->
+            <Border Background="{StaticResource CardBg}" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Select Project" FontSize="14" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimary}" Margin="0,0,0,8"/>
+                    <ComboBox Name="ProjectSelector" Width="400" HorizontalAlignment="Left"
+                              SelectionChanged="ProjectSelector_Changed"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Exclusion Rules -->
+            <Border Background="{StaticResource CardBg}" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Exclusion Rules" FontSize="14" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimary}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Files matching these patterns will NOT be included in versions."
+                               FontSize="12" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,10"/>
+
+                    <ListBox Name="ExclusionsList" MaxHeight="250"
+                             Background="Transparent" BorderThickness="0"
+                             Foreground="{StaticResource TextPrimary}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="4,2">
+                                    <Button Content="X" DockPanel.Dock="Right"
+                                            Style="{StaticResource DangerButton}"
+                                            Tag="{Binding Pattern}" Click="RemoveExclusion_Click"
+                                            FontSize="10" Padding="6,2" Margin="8,0,0,0"/>
+                                    <TextBlock Text="{Binding Pattern}" FontFamily="Consolas"
+                                               FontSize="13" Foreground="{StaticResource TextPrimary}"
+                                               VerticalAlignment="Center"/>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <TextBox Name="NewPatternBox" Width="300" Padding="8,6"
+                                 Background="#1A1A1A" Foreground="{StaticResource TextPrimary}"
+                                 BorderThickness="1" BorderBrush="#333333" FontFamily="Consolas"/>
+                        <Button Content="Add Pattern" Style="{StaticResource SmallButton}"
+                                Margin="8,0,0,0" Click="AddExclusion_Click"/>
+                    </StackPanel>
+
+                    <Button Content="Apply Exclusions &amp; Update .gitignore"
+                            Style="{StaticResource AccentButton}" Margin="0,12,0,0"
+                            HorizontalAlignment="Left" Click="ApplyExclusions_Click"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Debounce Setting -->
+            <Border Background="{StaticResource CardBg}" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Auto-Version Delay" FontSize="14" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimary}" Margin="0,0,0,4"/>
+                    <TextBlock Text="How long to wait after you stop editing before creating a version"
+                               FontSize="12" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,8"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Slider Name="DebounceSlider" Width="300" Minimum="15" Maximum="300"
+                                Value="60" TickFrequency="15" IsSnapToTickEnabled="True"/>
+                        <TextBlock Name="DebounceValueText" Text="60s" Margin="12,0,0,0"
+                                   FontSize="14" Foreground="{StaticResource TextPrimary}"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <Button Content="Save Debounce" Style="{StaticResource SmallButton}"
+                            Margin="0,8,0,0" HorizontalAlignment="Left"
+                            Click="SaveDebounce_Click"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Attribution -->
+            <Border Background="{StaticResource CardBg}" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Attribution Watermarking" FontSize="14" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimary}" Margin="0,0,0,4"/>
+                    <TextBlock Text="Proof-of-concept metadata for marking changes as human or AI authored."
+                               FontSize="12" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,10"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="Default author:" Width="120"
+                                   Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center"/>
+                        <ComboBox Name="AttributionSelector" Width="180"/>
+                    </StackPanel>
+
+                    <CheckBox Name="EnableWatermarkingCheck"
+                              Content="Enable deterministic text watermark manifest"
+                              Foreground="{StaticResource TextPrimary}" Margin="0,0,0,6"/>
+                    <TextBlock Name="AttributionBudgetText"
+                               FontSize="12" Foreground="{StaticResource TextSecondary}"/>
+
+                    <Button Content="Save Attribution" Style="{StaticResource SmallButton}"
+                            Margin="0,10,0,0" HorizontalAlignment="Left"
+                            Click="SaveAttribution_Click"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Agent Auto-Start -->
+            <Border Background="{StaticResource CardBg}" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Background Agent" FontSize="14" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimary}" Margin="0,0,0,8"/>
+                    <TextBlock Name="StartupStatusText" Text="Checking..."
+                               FontSize="12" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,8"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Register Startup Task" Style="{StaticResource AccentButton}"
+                                Margin="0,0,10,0" Click="RegisterStartup_Click"/>
+                        <Button Content="Remove Startup Task" Style="{StaticResource DangerButton}"
+                                Click="UnregisterStartup_Click"/>
+                    </StackPanel>
+                    <Button Content="Start Agent Now" Style="{StaticResource SmallButton}"
+                            Margin="0,10,0,0" HorizontalAlignment="Left"
+                            Click="StartAgent_Click"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

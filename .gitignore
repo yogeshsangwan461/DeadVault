@@ -1,0 +1,11 @@
+/.vs/
+/.nuget/
+/build/
+/data/index.json
+/data/logs/
+/src/**/bin/
+/src/**/obj/
+/tests/**/bin/
+/tests/**/obj/
+*.user
+*.suo

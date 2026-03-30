@@ -1,0 +1,129 @@
+<Window x:Class="DeadVault.UI.Views.VersionPromptWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="DeadVault - Choose Version"
+        Width="540" Height="460"
+        WindowStartupLocation="CenterScreen"
+        MinWidth="480" MinHeight="360"
+        ResizeMode="CanResize"
+        Topmost="True"
+        Background="#000000">
+
+    <Border Padding="24">
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+        <StackPanel>
+            <!-- Header -->
+            <TextBlock Text="Changes Detected" FontSize="20" FontWeight="Bold"
+                       Foreground="#3B82F6" Margin="0,0,0,6"/>
+            <TextBlock Name="ProjectNameText" FontSize="13" Foreground="#999999"/>
+            <TextBlock Name="CurrentVersionText" FontSize="14" Foreground="#FFFFFF" Margin="0,4,0,0"/>
+            <TextBlock Name="FilesChangedText" FontSize="12" Foreground="#999999" Margin="0,4,0,16"/>
+
+            <!-- Question -->
+            <TextBlock Text="What kind of change is this?" FontSize="15" FontWeight="SemiBold"
+                       Foreground="#FFFFFF" Margin="0,0,0,14"/>
+
+            <!-- Patch Button -->
+            <Button Click="Patch_Click" Cursor="Hand" Margin="0,0,0,8">
+                <Button.Template>
+                    <ControlTemplate>
+                        <Border Background="#1A1A1A" CornerRadius="8" Padding="16,12"
+                                BorderBrush="#333333" BorderThickness="1"
+                                x:Name="Bd">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Fix / Patch" FontSize="15" FontWeight="Bold"
+                                               Foreground="#22C55E"/>
+                                    <TextBlock Name="PatchVersionPreview" FontSize="13"
+                                               Foreground="#999999" Margin="10,2,0,0"/>
+                                </StackPanel>
+                                <TextBlock Text="Bug fix, small tweak, typo — stays on the same version"
+                                           FontSize="12" Foreground="#999999" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#22C55E"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <!-- Minor Button -->
+            <Button Click="Minor_Click" Cursor="Hand" Margin="0,0,0,8">
+                <Button.Template>
+                    <ControlTemplate>
+                        <Border Background="#1A1A1A" CornerRadius="8" Padding="16,12"
+                                BorderBrush="#333333" BorderThickness="1"
+                                x:Name="Bd">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Minor Version" FontSize="15" FontWeight="Bold"
+                                               Foreground="#3B82F6"/>
+                                    <TextBlock Name="MinorVersionPreview" FontSize="13"
+                                               Foreground="#999999" Margin="10,2,0,0"/>
+                                </StackPanel>
+                                <TextBlock Text="New feature, meaningful change — bumps minor version"
+                                           FontSize="12" Foreground="#999999" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#3B82F6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <!-- Major Button -->
+            <Button Click="Major_Click" Cursor="Hand" Margin="0,0,0,14">
+                <Button.Template>
+                    <ControlTemplate>
+                        <Border Background="#1A1A1A" CornerRadius="8" Padding="16,12"
+                                BorderBrush="#333333" BorderThickness="1"
+                                x:Name="Bd">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Major Version" FontSize="15" FontWeight="Bold"
+                                               Foreground="#F97316"/>
+                                    <TextBlock Name="MajorVersionPreview" FontSize="13"
+                                               Foreground="#999999" Margin="10,2,0,0"/>
+                                </StackPanel>
+                                <TextBlock Text="Breaking change, rewrite, big milestone — bumps major"
+                                           FontSize="12" Foreground="#999999" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#F97316"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <!-- Don't Ask / Just Patch -->
+            <Button Click="DontAsk_Click" Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate>
+                        <Border Background="Transparent" CornerRadius="6" Padding="10,8"
+                                x:Name="Bd">
+                            <TextBlock Text="Don't ask — just auto-patch for this session"
+                                       FontSize="12" Foreground="#666666"
+                                       TextDecorations="Underline" HorizontalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1A1A1A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </StackPanel>
+        </ScrollViewer>
+    </Border>
+</Window>

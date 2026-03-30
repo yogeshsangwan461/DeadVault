@@ -1,0 +1,19 @@
+// Disambiguate WPF vs WinForms types — WPF wins for all UI types
+global using Application = System.Windows.Application;
+global using UserControl = System.Windows.Controls.UserControl;
+global using MessageBox = System.Windows.MessageBox;
+global using Button = System.Windows.Controls.Button;
+global using MessageBoxButton = System.Windows.MessageBoxButton;
+global using MessageBoxImage = System.Windows.MessageBoxImage;
+global using MessageBoxResult = System.Windows.MessageBoxResult;
+global using StartupEventArgs = System.Windows.StartupEventArgs;
+global using ExitEventArgs = System.Windows.ExitEventArgs;
+global using Window = System.Windows.Window;
+global using WindowState = System.Windows.WindowState;
+global using FontWeights = System.Windows.FontWeights;
+global using Brush = System.Windows.Media.Brush;
+global using Brushes = System.Windows.Media.Brushes;
+global using Color = System.Windows.Media.Color;
+global using SolidColorBrush = System.Windows.Media.SolidColorBrush;
+global using Path = System.IO.Path;
+global using SaveFileDialog = Microsoft.Win32.SaveFileDialog;

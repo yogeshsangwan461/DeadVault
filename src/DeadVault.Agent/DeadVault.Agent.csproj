@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DeadVault.Core\DeadVault.Core.csproj" />
+    <ProjectReference Include="..\DeadVault.Store\DeadVault.Store.csproj" />
+  </ItemGroup>
+
+</Project>

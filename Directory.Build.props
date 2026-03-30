@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <!--
+      MSBuild can be configured (via env var) to hard-fail when it sees drive-rooted
+      wildcards. The SDK generates some drive-rooted exclude globs when BaseOutputPath
+      is absolute, which can cause silent failures during project-reference evaluation.
+    -->
+    <MSBUILDFAILONDRIVEENUMERATINGWILDCARD>0</MSBUILDFAILONDRIVEENUMERATINGWILDCARD>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BaseOutputPath>Z:\DeadVault\build\$(MSBuildProjectName)\bin\</BaseOutputPath>
+    <BaseIntermediateOutputPath>Z:\DeadVault\build\$(MSBuildProjectName)\obj\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+</Project>

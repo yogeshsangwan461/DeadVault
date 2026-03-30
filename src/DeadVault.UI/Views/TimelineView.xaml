@@ -1,0 +1,151 @@
+<UserControl x:Class="DeadVault.UI.Views.TimelineView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{StaticResource ContentBg}">
+    <DockPanel Margin="24">
+        <!-- Header -->
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Left">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Name="ProjectNameText" Text="Timeline" FontSize="24" FontWeight="Bold"
+                                   Foreground="{StaticResource TextPrimary}"/>
+                        <Border Name="CurrentVersionBadge" Background="#3B82F6" CornerRadius="6"
+                                Padding="10,4" Margin="12,0,0,0" VerticalAlignment="Center"
+                                Visibility="Collapsed">
+                            <TextBlock Name="CurrentVersionText" FontSize="13" FontWeight="Bold"
+                                       Foreground="#000000"/>
+                        </Border>
+                    </StackPanel>
+                    <TextBlock Name="ProjectPathText" FontSize="12"
+                               Foreground="{StaticResource TextSecondary}" Margin="0,4,0,0"/>
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <ComboBox Name="RestoreSelector" Width="320" Margin="0,0,10,0"
+                              DisplayMemberPath="RestoreLabel"
+                              Background="{StaticResource CardBg}"
+                              Foreground="{StaticResource TextPrimary}"/>
+                    <Button Content="Restore Selected" Style="{StaticResource SmallButton}"
+                            Margin="0,0,10,0"
+                            Click="RestoreSelected_Click"/>
+                    <ComboBox Name="ProjectSelector" Width="220" Margin="0,0,10,0"
+                              SelectionChanged="ProjectSelector_Changed"
+                              Background="{StaticResource CardBg}"
+                              Foreground="{StaticResource TextPrimary}"/>
+                    <Button Content="Refresh" Style="{StaticResource SmallButton}" Click="Refresh_Click"/>
+                </StackPanel>
+            </DockPanel>
+        </StackPanel>
+
+        <!-- Empty State -->
+        <StackPanel Name="EmptyState" Visibility="Collapsed"
+                    VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,60,0,0">
+            <TextBlock Text="No versions yet" FontSize="20" FontWeight="Bold"
+                       Foreground="{StaticResource TextPrimary}" HorizontalAlignment="Center"/>
+            <TextBlock Text="Edit files in your project folder and they'll be versioned automatically."
+                       FontSize="13" Foreground="{StaticResource TextSecondary}"
+                       HorizontalAlignment="Center" Margin="0,8,0,0"/>
+            <TextBlock Text="Or click 'Create Version' on the Projects page to create one manually."
+                       FontSize="12" Foreground="{StaticResource TextSecondary}"
+                       HorizontalAlignment="Center" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Snapshot List -->
+        <ScrollViewer Name="SnapshotsScroll" VerticalScrollBarVisibility="Auto">
+            <ItemsControl Name="SnapshotsList">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{StaticResource CardBg}" CornerRadius="8"
+                                Padding="14" Margin="0,0,0,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- SHA -->
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding ShortSha}" FontFamily="Consolas"
+                                               FontSize="13" Foreground="{StaticResource AccentBrush}"/>
+                                </StackPanel>
+
+                                <!-- Info -->
+                                <StackPanel Grid.Column="1" Margin="12,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Message}" FontSize="14"
+                                                   Foreground="{StaticResource TextPrimary}"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                        <TextBlock Text="{Binding RelativeTime}" FontSize="12"
+                                                   Foreground="{StaticResource TextSecondary}"/>
+                                        <TextBlock Text=" | " Foreground="{StaticResource TextSecondary}" FontSize="12"/>
+                                        <TextBlock Text="{Binding FilesChanged, StringFormat='{}{0} files'}"
+                                                   FontSize="12" Foreground="{StaticResource TextSecondary}"/>
+
+                                        <!-- Version badge -->
+                                        <Border Background="#3B82F6" CornerRadius="4"
+                                                Padding="6,2" Margin="10,0,0,0"
+                                                Visibility="{Binding HasVersion, Converter={StaticResource BoolVis}}">
+                                            <TextBlock Text="{Binding Version}" FontSize="11"
+                                                       Foreground="#000000" FontWeight="SemiBold"/>
+                                        </Border>
+
+                                        <!-- Bump kind badge -->
+                                        <Border Background="{Binding BumpKindColor}" CornerRadius="4"
+                                                Padding="6,2" Margin="4,0,0,0"
+                                                Visibility="{Binding HasBumpKind, Converter={StaticResource BoolVis}}">
+                                            <TextBlock Text="{Binding BumpKind}" FontSize="11"
+                                                       Foreground="#000000" FontWeight="SemiBold"/>
+                                        </Border>
+
+                                        <Border Background="#FDE68A" CornerRadius="4"
+                                                Padding="6,2" Margin="4,0,0,0">
+                                            <TextBlock Text="{Binding AuthorBadgeText}" FontSize="11"
+                                                       Foreground="#000000" FontWeight="SemiBold"/>
+                                        </Border>
+
+                                        <!-- Tag badge -->
+                                        <Border Background="{StaticResource YellowBrush}" CornerRadius="4"
+                                                Padding="6,2" Margin="10,0,0,0"
+                                                Visibility="{Binding HasTag, Converter={StaticResource BoolVis}}">
+                                            <TextBlock Text="{Binding TagName}" FontSize="11"
+                                                       Foreground="#000000" FontWeight="SemiBold"/>
+                                        </Border>
+
+                                        <!-- Pre-restore badge -->
+                                        <Border Background="{StaticResource PeachBrush}" CornerRadius="4"
+                                                Padding="6,2" Margin="10,0,0,0"
+                                                Visibility="{Binding IsPreRestore, Converter={StaticResource BoolVis}}">
+                                            <TextBlock Text="Pre-Restore" FontSize="11"
+                                                       Foreground="#000000" FontWeight="SemiBold"/>
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Actions -->
+                                <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                            VerticalAlignment="Center">
+                                    <Button Content="Restore" Style="{StaticResource SmallButton}"
+                                            Margin="0,0,4,0" Tag="{Binding CommitSha}"
+                                            Click="Restore_Click"/>
+                                    <Button Content="Diff" Style="{StaticResource SmallButton}"
+                                            Margin="0,0,4,0" Tag="{Binding CommitSha}"
+                                            Click="Diff_Click"/>
+                                    <Button Content="Tag" Style="{StaticResource SmallButton}"
+                                            Margin="0,0,4,0" Tag="{Binding CommitSha}"
+                                            Click="Tag_Click"/>
+                                    <Button Content="Export" Style="{StaticResource SmallButton}"
+                                            Tag="{Binding CommitSha}"
+                                            Click="Export_Click"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>
+
