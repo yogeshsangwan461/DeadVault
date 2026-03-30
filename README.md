@@ -114,6 +114,10 @@ Available tools:
 
 - runtime project metadata in `data/index.json` is machine-local state and should generally not be committed
 
+## License
+
+MIT. See `LICENSE`.
+
 ## Verification
 
 If `dotnet build DeadVault.sln` fails with a "0 errors" summary, use the stable build command:
