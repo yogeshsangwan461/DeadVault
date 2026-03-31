@@ -17,6 +17,7 @@ DeadVault is a proof-of-concept aimed at that gap. It keeps an internal history,
 - watches registered project folders with configurable debounce timing
 - stores snapshots in a hidden `.deadvault` Git directory
 - exposes timeline, diff, restore, export, and tagging in the WPF UI
+- includes a "Text & Code Watermarking" utility page (proof-of-concept)
 - writes a tracked `.deadvault.attribution.json` manifest for deterministic text watermark metadata
 - records per-snapshot attribution trailers so versions can be queried by `human` or `ai`
 - ships an MCP server with:
@@ -106,11 +107,10 @@ Available tools:
 
 ## Notes for publishing
 
-- the workspace is currently not a Git repo itself, so making it public on GitHub still needs:
-  1. `git init`
-  2. `git add .`
-  3. `git commit -m "Initial public release"`
-  4. create a GitHub repo and push
+- this repo is already initialized locally; to publish on GitHub:
+  1. create a GitHub repo
+  2. `git remote add origin <url>`
+  3. `git push -u origin main`
 
 - runtime project metadata in `data/index.json` is machine-local state and should generally not be committed
 
