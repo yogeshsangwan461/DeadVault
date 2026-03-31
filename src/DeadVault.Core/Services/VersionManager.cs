@@ -31,8 +31,16 @@ public class VersionManager
             VersionBumpKind.Patch => current.BumpPatch(),
             VersionBumpKind.Minor => current.BumpMinor(),
             VersionBumpKind.Major => current.BumpMajor(),
+            VersionBumpKind.Dev => current,
             _ => current.BumpPatch(),
         };
+    }
+
+    public SemanticVersion GetCustomVersion(string customVersion)
+    {
+        if (!SemanticVersion.TryParse(customVersion, out var ver) || ver == null)
+            throw new ArgumentException("Invalid version format. Expected X.Y.Z", nameof(customVersion));
+        return ver;
     }
 
     public async Task<SemanticVersion> BumpVersionAsync(ProjectConfig project, VersionBumpKind kind)
@@ -126,6 +134,8 @@ public class VersionManager
             VersionBumpKind.Patch => "patch",
             VersionBumpKind.Minor => "minor",
             VersionBumpKind.Major => "major",
+            VersionBumpKind.Dev => "dev",
+            VersionBumpKind.Custom => "custom",
             _ => "patch",
         };
 
@@ -151,8 +161,8 @@ public class VersionManager
         if (vMatch.Success && SemanticVersion.TryParse(vMatch.Groups[1].Value, out var v))
             version = v;
 
-        // Match [patch], [minor], [major]
-        var kMatch = System.Text.RegularExpressions.Regex.Match(message, @"\[(patch|minor|major)\]");
+        // Match [patch], [minor], [major], [dev], [custom]
+        var kMatch = System.Text.RegularExpressions.Regex.Match(message, @"\[(patch|minor|major|dev|custom)\]");
         if (kMatch.Success)
             kind = kMatch.Groups[1].Value;
 

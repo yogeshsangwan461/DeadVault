@@ -12,7 +12,7 @@ public class SnapshotInfo
     public bool IsManual { get; set; }
     public bool IsDemo { get; set; }
     public string? Version { get; set; }
-    public string? BumpKind { get; set; } // "patch", "minor", "major"
+    public string? BumpKind { get; set; } // "patch", "minor", "major", "dev", "custom"
     public string AuthorKind { get; set; } = "unknown";
     public int HumanFiles { get; set; }
     public int AiFiles { get; set; }

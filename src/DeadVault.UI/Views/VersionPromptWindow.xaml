@@ -24,6 +24,33 @@
             <TextBlock Text="What kind of change is this?" FontSize="15" FontWeight="SemiBold"
                        Foreground="#FFFFFF" Margin="0,0,0,14"/>
 
+            <!-- Dev Button -->
+            <Button Click="Dev_Click" Cursor="Hand" Margin="0,0,0,8">
+                <Button.Template>
+                    <ControlTemplate>
+                        <Border Background="#1A1A1A" CornerRadius="8" Padding="16,12"
+                                BorderBrush="#333333" BorderThickness="1"
+                                x:Name="Bd">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Dev Snapshot" FontSize="15" FontWeight="Bold"
+                                               Foreground="#A78BFA"/>
+                                    <TextBlock Name="DevVersionPreview" FontSize="13"
+                                               Foreground="#999999" Margin="10,2,0,0"/>
+                                </StackPanel>
+                                <TextBlock Text="Tiny change, experiment, checkpoint - keeps the current version"
+                                           FontSize="12" Foreground="#999999" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#A78BFA"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
             <!-- Patch Button -->
             <Button Click="Patch_Click" Cursor="Hand" Margin="0,0,0,8">
                 <Button.Template>
@@ -38,7 +65,7 @@
                                     <TextBlock Name="PatchVersionPreview" FontSize="13"
                                                Foreground="#999999" Margin="10,2,0,0"/>
                                 </StackPanel>
-                                <TextBlock Text="Bug fix, small tweak, typo — stays on the same version"
+                                <TextBlock Text="Bug fix, small tweak, typo - bumps patch version"
                                            FontSize="12" Foreground="#999999" Margin="0,4,0,0"/>
                             </StackPanel>
                         </Border>
@@ -65,7 +92,7 @@
                                     <TextBlock Name="MinorVersionPreview" FontSize="13"
                                                Foreground="#999999" Margin="10,2,0,0"/>
                                 </StackPanel>
-                                <TextBlock Text="New feature, meaningful change — bumps minor version"
+                                <TextBlock Text="New feature, meaningful change - bumps minor version"
                                            FontSize="12" Foreground="#999999" Margin="0,4,0,0"/>
                             </StackPanel>
                         </Border>
@@ -92,7 +119,7 @@
                                     <TextBlock Name="MajorVersionPreview" FontSize="13"
                                                Foreground="#999999" Margin="10,2,0,0"/>
                                 </StackPanel>
-                                <TextBlock Text="Breaking change, rewrite, big milestone — bumps major"
+                                <TextBlock Text="Breaking change, rewrite, big milestone - bumps major"
                                            FontSize="12" Foreground="#999999" Margin="0,4,0,0"/>
                             </StackPanel>
                         </Border>
@@ -105,13 +132,40 @@
                 </Button.Template>
             </Button>
 
+            <!-- Custom Button -->
+            <Button Click="Custom_Click" Cursor="Hand" Margin="0,0,0,14">
+                <Button.Template>
+                    <ControlTemplate>
+                        <Border Background="#1A1A1A" CornerRadius="8" Padding="16,12"
+                                BorderBrush="#333333" BorderThickness="1"
+                                x:Name="Bd">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Other / Custom Version" FontSize="15" FontWeight="Bold"
+                                               Foreground="#FDE68A"/>
+                                    <TextBlock Name="CustomVersionPreview" FontSize="13"
+                                               Foreground="#999999" Margin="10,2,0,0"/>
+                                </StackPanel>
+                                <TextBlock Text="Jump to a specific version (example: 0.9.0, 1.0.0)"
+                                           FontSize="12" Foreground="#999999" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#FDE68A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
             <!-- Don't Ask / Just Patch -->
             <Button Click="DontAsk_Click" Cursor="Hand">
                 <Button.Template>
                     <ControlTemplate>
                         <Border Background="Transparent" CornerRadius="6" Padding="10,8"
                                 x:Name="Bd">
-                            <TextBlock Text="Don't ask — just auto-patch for this session"
+                            <TextBlock Text="Don't ask - just auto-patch for this session"
                                        FontSize="12" Foreground="#666666"
                                        TextDecorations="Underline" HorizontalAlignment="Center"/>
                         </Border>

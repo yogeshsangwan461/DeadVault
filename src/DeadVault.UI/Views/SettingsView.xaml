@@ -69,12 +69,18 @@
                               Content="Disable auto-versioning (infinite delay)"
                               Foreground="{StaticResource TextPrimary}" Margin="0,0,0,8"/>
                     <StackPanel Orientation="Horizontal">
-                        <Slider Name="DebounceSlider" Width="300" Minimum="15" Maximum="600"
+                        <Slider Name="DebounceSlider" Width="300" Minimum="1" Maximum="600"
                                 Value="60" TickFrequency="15" IsSnapToTickEnabled="True"/>
-                        <TextBlock Name="DebounceValueText" Text="60s" Margin="12,0,0,0"
+                        <TextBox Name="DebounceSecondsBox" Width="90" Margin="12,0,0,0" Padding="8,4"
+                                 Background="#1A1A1A" Foreground="{StaticResource TextPrimary}"
+                                 BorderThickness="1" BorderBrush="#333333"
+                                 VerticalContentAlignment="Center"/>
+                        <TextBlock Text="s" Margin="8,0,0,0"
                                    FontSize="14" Foreground="{StaticResource TextPrimary}"
                                    VerticalAlignment="Center"/>
                     </StackPanel>
+                    <TextBlock Text="Tip: enter a larger number for long delays, or disable for infinity."
+                               FontSize="12" Foreground="{StaticResource TextSecondary}" Margin="0,6,0,0"/>
                     <Button Content="Save Debounce" Style="{StaticResource SmallButton}"
                             Margin="0,8,0,0" HorizontalAlignment="Left"
                             Click="SaveDebounce_Click"/>
@@ -96,6 +102,12 @@
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="Quick pick:" Width="120"
+                                   Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center"/>
+                        <ComboBox Name="AttributionDetailPresetSelector" Width="240"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                         <TextBlock Text="Detail (optional):" Width="120"
                                    Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center"/>
                         <TextBox Name="AttributionDetailBox" Width="240" Padding="6,4"
@@ -103,6 +115,17 @@
                                  BorderThickness="1" BorderBrush="#333333"/>
                     </StackPanel>
                     <TextBlock Text="Examples: gpt-5.4, claude-3.7, local-llama, alice"
+                               FontSize="12" Foreground="{StaticResource TextSecondary}"
+                               Margin="0,0,0,10"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="Borrowed from:" Width="120"
+                                   Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center"/>
+                        <TextBox Name="WatermarkingSourceBox" Width="240" Padding="6,4"
+                                 Background="#1A1A1A" Foreground="{StaticResource TextPrimary}"
+                                 BorderThickness="1" BorderBrush="#333333"/>
+                    </StackPanel>
+                    <TextBlock Text="Example: DeadMark v0.1 (text/code watermarking UI + carriers)"
                                FontSize="12" Foreground="{StaticResource TextSecondary}"
                                Margin="0,0,0,10"/>
 

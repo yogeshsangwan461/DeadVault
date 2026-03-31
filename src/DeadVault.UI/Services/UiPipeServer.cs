@@ -127,6 +127,8 @@ public class UiPipeServer
                         VersionBumpKind.Patch => "patch",
                         VersionBumpKind.Minor => "minor",
                         VersionBumpKind.Major => "major",
+                        VersionBumpKind.Dev => "dev",
+                        VersionBumpKind.Custom => "custom",
                         _ => "patch",
                     };
 
@@ -134,6 +136,7 @@ public class UiPipeServer
                     {
                         Answered = true,
                         BumpKind = kind,
+                        CustomVersion = window.CustomVersion,
                         DontAskJustPatch = window.DontAskJustPatch,
                     });
                 }

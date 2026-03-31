@@ -17,6 +17,9 @@ public class ProjectConfig
     public bool EnableTextWatermarking { get; set; } = true;
     public int AttributionTextBudgetBytes { get; set; } = 10 * 1024 * 1024;
 
+    // Optional: record where watermarking ideas/tools came from (for transparency/auditability).
+    public string? WatermarkingSource { get; set; }
+
     public static List<ExclusionRule> GetDefaultExclusions() => new()
     {
         new() { Pattern = ".deadvault/", Description = "DeadVault internal", IsDefault = true },
@@ -50,7 +53,11 @@ public class ProjectConfig
         if (DebounceSeconds < 0)
             DebounceSeconds = 60;
         if (DebounceSeconds > 0)
-            DebounceSeconds = Math.Clamp(DebounceSeconds, 15, 600);
+        {
+            // Keep this generous so people can effectively "pause" auto-snap without fully disabling it.
+            const int MaxDebounceSeconds = 60 * 60 * 24 * 30; // 30 days
+            DebounceSeconds = Math.Clamp(DebounceSeconds, 1, MaxDebounceSeconds);
+        }
 
         SessionTimeoutMinutes = Math.Clamp(SessionTimeoutMinutes <= 0 ? 120 : SessionTimeoutMinutes, 15, 1440);
         AttributionAuthor = AttributionAuthorKinds.NormalizeWithDetail(AttributionAuthor);
@@ -60,5 +67,9 @@ public class ProjectConfig
         AttributionTextBudgetBytes = AttributionTextBudgetBytes <= 0
             ? 10 * 1024 * 1024
             : AttributionTextBudgetBytes;
+
+        WatermarkingSource = string.IsNullOrWhiteSpace(WatermarkingSource)
+            ? null
+            : WatermarkingSource.Trim();
     }
 }

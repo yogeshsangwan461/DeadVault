@@ -64,6 +64,7 @@
 
                     <ListBoxItem Content="Projects" Tag="Projects" IsSelected="True"/>
                     <ListBoxItem Content="Timeline" Tag="Timeline"/>
+                    <ListBoxItem Content="Watermark" Tag="Watermark"/>
                     <ListBoxItem Content="Settings" Tag="Settings"/>
                     <ListBoxItem Content="Logs" Tag="Logs"/>
                 </ListBox>

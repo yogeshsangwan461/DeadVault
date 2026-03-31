@@ -7,6 +7,7 @@ public partial class VersionPromptWindow : Window
 {
     public VersionBumpKind? SelectedBump { get; private set; }
     public bool DontAskJustPatch { get; private set; }
+    public string? CustomVersion { get; private set; }
 
     public VersionPromptWindow(string projectName, SemanticVersion currentVersion, int filesChanged)
     {
@@ -25,14 +26,25 @@ public partial class VersionPromptWindow : Window
         // Find the named elements inside the button templates after rendering
         Loaded += (s, e) =>
         {
+            var dev = FindVisualChild<System.Windows.Controls.TextBlock>(this, "DevVersionPreview");
             var patch = FindVisualChild<System.Windows.Controls.TextBlock>(this, "PatchVersionPreview");
             var minor = FindVisualChild<System.Windows.Controls.TextBlock>(this, "MinorVersionPreview");
             var major = FindVisualChild<System.Windows.Controls.TextBlock>(this, "MajorVersionPreview");
+            var custom = FindVisualChild<System.Windows.Controls.TextBlock>(this, "CustomVersionPreview");
 
-            if (patch != null) patch.Text = $"→ {current.BumpPatch()}";
-            if (minor != null) minor.Text = $"→ {current.BumpMinor()}";
-            if (major != null) major.Text = $"→ {current.BumpMajor()}";
+            if (dev != null) dev.Text = $"-> {current}";
+            if (patch != null) patch.Text = $"-> {current.BumpPatch()}";
+            if (minor != null) minor.Text = $"-> {current.BumpMinor()}";
+            if (major != null) major.Text = $"-> {current.BumpMajor()}";
+            if (custom != null) custom.Text = "-> (pick)";
         };
+    }
+
+    private void Dev_Click(object sender, RoutedEventArgs e)
+    {
+        SelectedBump = VersionBumpKind.Dev;
+        DialogResult = true;
+        Close();
     }
 
     private void Patch_Click(object sender, RoutedEventArgs e)
@@ -52,6 +64,29 @@ public partial class VersionPromptWindow : Window
     private void Major_Click(object sender, RoutedEventArgs e)
     {
         SelectedBump = VersionBumpKind.Major;
+        DialogResult = true;
+        Close();
+    }
+
+    private void Custom_Click(object sender, RoutedEventArgs e)
+    {
+        var versionText = Microsoft.VisualBasic.Interaction.InputBox(
+            "Enter a version (X.Y.Z):",
+            "Custom Version",
+            "1.0.0");
+
+        if (string.IsNullOrWhiteSpace(versionText))
+            return;
+
+        if (!SemanticVersion.TryParse(versionText.Trim(), out var ver) || ver == null)
+        {
+            MessageBox.Show("Invalid version. Expected something like 1.2.3", "DeadVault",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        CustomVersion = ver.ToString().TrimStart('v');
+        SelectedBump = VersionBumpKind.Custom;
         DialogResult = true;
         Close();
     }

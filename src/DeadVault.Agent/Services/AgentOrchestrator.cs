@@ -124,6 +124,7 @@ public class AgentOrchestrator
 
             // Determine the version bump kind
             VersionBumpKind bumpKind;
+            SemanticVersion? customTargetVersion = null;
 
             if (_versionManager.IsAutoPatchSession(project))
             {
@@ -155,8 +156,25 @@ public class AgentOrchestrator
                     {
                         "minor" => VersionBumpKind.Minor,
                         "major" => VersionBumpKind.Major,
+                        "dev" => VersionBumpKind.Dev,
+                        "custom" => VersionBumpKind.Custom,
                         _ => VersionBumpKind.Patch,
                     };
+
+                    if (bumpKind == VersionBumpKind.Custom)
+                    {
+                        if (!string.IsNullOrWhiteSpace(promptResponse.CustomVersion) &&
+                            SemanticVersion.TryParse(promptResponse.CustomVersion.Trim(), out var parsed) &&
+                            parsed != null)
+                        {
+                            customTargetVersion = parsed;
+                        }
+                        else
+                        {
+                            VaultLogger.Warn($"[{project.Name}] Custom version requested, but value was invalid; falling back to Patch");
+                            bumpKind = VersionBumpKind.Patch;
+                        }
+                    }
 
                     if (promptResponse.DontAskJustPatch)
                     {
@@ -168,16 +186,22 @@ public class AgentOrchestrator
             // Preview the next version and include it in the commit message.
             // Persisting the version happens only after a successful snapshot commit.
             var previousVersion = _versionManager.GetCurrentVersion(project);
-            var newVersion = _versionManager.GetNextVersion(project, bumpKind);
+            var newVersion = bumpKind == VersionBumpKind.Custom && customTargetVersion != null
+                ? customTargetVersion
+                : _versionManager.GetNextVersion(project, bumpKind);
             var commitMsg = _versionManager.BuildCommitMessage(newVersion, bumpKind);
 
             var result = await _snapshotManager.CreateSnapshotAsync(project, commitMsg);
             if (result != null)
             {
-                await _versionManager.SetCurrentVersionAsync(
-                    project,
-                    newVersion,
-                    $"[{project.Name}] Version bumped: {previousVersion} -> {newVersion} ({bumpKind})");
+                if (bumpKind != VersionBumpKind.Dev)
+                {
+                    var logMessage = bumpKind == VersionBumpKind.Custom
+                        ? $"[{project.Name}] Version set: {previousVersion} -> {newVersion} (custom)"
+                        : $"[{project.Name}] Version bumped: {previousVersion} -> {newVersion} ({bumpKind})";
+
+                    await _versionManager.SetCurrentVersionAsync(project, newVersion, logMessage);
+                }
 
                 Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] [{project.Name}] Snapshot: {result.ShortSha} [{newVersion}] [{bumpKind.ToString().ToLower()}] ({result.FilesChanged} files)");
             }

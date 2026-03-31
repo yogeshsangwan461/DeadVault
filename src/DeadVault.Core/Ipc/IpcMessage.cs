@@ -43,6 +43,7 @@ public class VersionPromptRequest
 public class VersionPromptResponse
 {
     public bool Answered { get; set; }
-    public string BumpKind { get; set; } = "patch"; // "patch", "minor", "major"
+    public string BumpKind { get; set; } = "patch"; // "patch", "minor", "major", "dev", "custom"
+    public string? CustomVersion { get; set; } // used when BumpKind == "custom"
     public bool DontAskJustPatch { get; set; }
 }

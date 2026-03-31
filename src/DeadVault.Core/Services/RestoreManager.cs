@@ -1,6 +1,7 @@
 using LibGit2Sharp;
 using DeadVault.Core.Interfaces;
 using DeadVault.Core.Models;
+using DeadVault.Store.Interfaces;
 using DeadVault.Store.Models;
 
 namespace DeadVault.Core.Services;
@@ -8,10 +9,12 @@ namespace DeadVault.Core.Services;
 public class RestoreManager : IRestoreManager
 {
     private readonly ISnapshotManager _snapshotManager;
+    private readonly VersionManager _versionManager;
 
-    public RestoreManager(ISnapshotManager snapshotManager)
+    public RestoreManager(ISnapshotManager snapshotManager, IMetadataStore store)
     {
         _snapshotManager = snapshotManager;
+        _versionManager = new VersionManager(store);
     }
 
     public async Task<RestoreResult> RestoreToSnapshotAsync(ProjectConfig project, string commitSha)
@@ -26,8 +29,11 @@ public class RestoreManager : IRestoreManager
 
             string preRestoreSha = preRestore?.CommitSha ?? "(no changes to save)";
 
+            SemanticVersion? restoredVersion = null;
+            string? restoredKind = null;
+
             // 2. Perform the restore
-            return await Task.Run(() =>
+            var result = await Task.Run(() =>
             {
                 using var repo = new Repository(project.FolderPath);
                 var targetCommit = repo.Lookup<Commit>(commitSha);
@@ -44,6 +50,10 @@ public class RestoreManager : IRestoreManager
 
                 // Hard reset to target commit
                 repo.Reset(ResetMode.Hard, targetCommit);
+
+                var parsed = VersionManager.ParseCommitMessage(targetCommit.Message);
+                restoredVersion = parsed.version;
+                restoredKind = parsed.kind;
 
                 // Count restored files
                 int filesRestored = 0;
@@ -68,6 +78,16 @@ public class RestoreManager : IRestoreManager
                     FilesRestored = filesRestored,
                 };
             });
+
+            if (result.Success && restoredVersion != null)
+            {
+                await _versionManager.SetCurrentVersionAsync(
+                    project,
+                    restoredVersion,
+                    $"[{project.Name}] Current version updated after restore: {restoredVersion} ({restoredKind ?? "unknown"})");
+            }
+
+            return result;
         }
         catch (Exception ex)
         {

@@ -68,4 +68,12 @@ public enum VersionBumpKind
     Patch,
     Minor,
     Major,
+    /// <summary>
+    /// Create a snapshot but keep the project's CurrentVersion unchanged.
+    /// </summary>
+    Dev,
+    /// <summary>
+    /// Set the project's CurrentVersion to a user-provided value.
+    /// </summary>
+    Custom,
 }

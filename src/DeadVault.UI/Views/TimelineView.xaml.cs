@@ -24,6 +24,10 @@ public class SnapshotDisplay : SnapshotInfo
             System.Windows.Media.Color.FromRgb(0x3B, 0x82, 0xF6)), // blue
         "major" => new System.Windows.Media.SolidColorBrush(
             System.Windows.Media.Color.FromRgb(0xF9, 0x73, 0x16)), // orange
+        "dev" => new System.Windows.Media.SolidColorBrush(
+            System.Windows.Media.Color.FromRgb(0xA7, 0x8B, 0xFA)), // purple
+        "custom" => new System.Windows.Media.SolidColorBrush(
+            System.Windows.Media.Color.FromRgb(0xFD, 0xE6, 0x8A)), // yellow
         _ => new System.Windows.Media.SolidColorBrush(
             System.Windows.Media.Color.FromRgb(0x99, 0x99, 0x99)), // gray
     };
