@@ -28,7 +28,7 @@ public partial class DiffView : UserControl
         var project = await store.GetProjectAsync(_params.ProjectId);
         if (project == null) return;
 
-        DiffHeaderText.Text = $"Diff — {_params.CommitSha[..8]}";
+        DiffHeaderText.Text = $"Diff - {_params.CommitSha[..8]}";
         DiffInfoText.Text = $"Project: {project.Name}";
 
         try

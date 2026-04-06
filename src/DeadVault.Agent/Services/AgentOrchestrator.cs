@@ -105,23 +105,8 @@ public class AgentOrchestrator
             return;
         }
 
-        if (!_lockManager.TryAcquire(project, out string? owner))
-        {
-            VaultLogger.Warn($"[{project.Name}] Skipping autosnap (locked by {owner})");
-            return;
-        }
-
         try
         {
-            // Record activity to keep the session alive
-            _versionManager.RecordActivity(project);
-
-            if (!await _snapshotManager.HasVersionableChangesAsync(project))
-            {
-                VaultLogger.Info($"[{project.Name}] No versionable changes detected; skipping");
-                return;
-            }
-
             // Determine the version bump kind
             VersionBumpKind bumpKind;
             SemanticVersion? customTargetVersion = null;
@@ -181,6 +166,21 @@ public class AgentOrchestrator
                         _versionManager.EnableAutoPatch(project);
                     }
                 }
+            }
+
+            if (!_lockManager.TryAcquire(project, out string? owner))
+            {
+                VaultLogger.Warn($"[{project.Name}] Skipping autosnap (locked by {owner})");
+                return;
+            }
+
+            // Record activity to keep the session alive
+            _versionManager.RecordActivity(project);
+
+            if (!await _snapshotManager.HasVersionableChangesAsync(project))
+            {
+                VaultLogger.Info($"[{project.Name}] No versionable changes detected; skipping");
+                return;
             }
 
             // Preview the next version and include it in the commit message.

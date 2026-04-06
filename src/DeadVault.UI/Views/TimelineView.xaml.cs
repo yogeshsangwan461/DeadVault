@@ -98,6 +98,7 @@ public partial class TimelineView : UserControl
 
     private async Task Initialize()
     {
+        TimelineStatusText.Text = "Loading versions...";
         var projects = await _store.GetAllProjectsAsync();
         ProjectSelector.ItemsSource = projects.Select(p => p.Name).ToList();
 
@@ -123,6 +124,7 @@ public partial class TimelineView : UserControl
     private async void ProjectSelector_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (ProjectSelector.SelectedIndex < 0) return;
+        TimelineStatusText.Text = "Loading versions...";
         var projects = await _store.GetAllProjectsAsync();
         if (ProjectSelector.SelectedIndex < projects.Count)
         {
@@ -135,8 +137,9 @@ public partial class TimelineView : UserControl
     {
         if (_currentProject == null) return;
 
-        ProjectNameText.Text = $"Timeline — {_currentProject.Name}";
+        ProjectNameText.Text = $"Timeline - {_currentProject.Name}";
         ProjectPathText.Text = _currentProject.FolderPath;
+        TimelineStatusText.Text = "Loading versions...";
 
         // Show current version in header
         if (!string.IsNullOrEmpty(_currentProject.CurrentVersion))
@@ -151,7 +154,7 @@ public partial class TimelineView : UserControl
 
         try
         {
-            var snapshots = await _snapshotManager.ListSnapshotsAsync(_currentProject);
+            var snapshots = await _snapshotManager.ListSnapshotsAsync(_currentProject, 200, includeFileCounts: false);
             var displayList = snapshots.Select(s => new SnapshotDisplay
             {
                 CommitSha = s.CommitSha,
@@ -177,17 +180,20 @@ public partial class TimelineView : UserControl
             SnapshotsList.ItemsSource = displayList;
             RestoreSelector.ItemsSource = displayList;
             RestoreSelector.SelectedIndex = displayList.Count > 0 ? 0 : -1;
+            TimelineStatusText.Text = displayList.Count == 0
+                ? "No saved versions found yet."
+                : $"Showing {displayList.Count} saved version{(displayList.Count == 1 ? string.Empty : "s")}.";
 
             // Toggle empty state
             if (displayList.Count == 0)
             {
                 EmptyState.Visibility = Visibility.Visible;
-                SnapshotsScroll.Visibility = Visibility.Collapsed;
+                SnapshotsList.Visibility = Visibility.Collapsed;
             }
             else
             {
                 EmptyState.Visibility = Visibility.Collapsed;
-                SnapshotsScroll.Visibility = Visibility.Visible;
+                SnapshotsList.Visibility = Visibility.Visible;
             }
         }
         catch (Exception ex)
@@ -195,11 +201,13 @@ public partial class TimelineView : UserControl
             VaultLogger.Error("Failed to load snapshots", ex);
             MessageBox.Show($"Failed to load timeline: {ex.Message}", "Error",
                 MessageBoxButton.OK, MessageBoxImage.Error);
+            TimelineStatusText.Text = "Timeline failed to load.";
         }
     }
 
     private async void Refresh_Click(object sender, RoutedEventArgs e)
     {
+        TimelineStatusText.Text = "Refreshing versions...";
         await LoadSnapshots();
     }
 
@@ -274,7 +282,7 @@ public partial class TimelineView : UserControl
         }
     }
 
-    private async void Diff_Click(object sender, RoutedEventArgs e)
+    private void Diff_Click(object sender, RoutedEventArgs e)
     {
         if (_currentProject == null) return;
         var sha = (string)((Button)sender).Tag;
@@ -330,7 +338,7 @@ public partial class TimelineView : UserControl
         {
             FileName = $"{_currentProject.Name}_{sha[..8]}.zip",
             Filter = "ZIP files|*.zip",
-            InitialDirectory = "Z:\\",
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
         };
 
         if (dialog.ShowDialog() != true) return;

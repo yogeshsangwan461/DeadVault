@@ -59,7 +59,6 @@ public partial class MainWindow : Window
             "Projects" => new ProjectsView(_store, _repoManager, _snapshotManager, _lockManager, this),
             "Timeline" => new TimelineView(_store, _snapshotManager, _restoreManager,
                                            _exportManager, _lockManager, parameter as string),
-            "Watermark" => new WatermarkView(),
             "Settings" => new SettingsView(_store, _repoManager, _pipeClient),
             "Logs" => new LogsView(),
             "Diff" => new DiffView(parameter as DiffViewParams),

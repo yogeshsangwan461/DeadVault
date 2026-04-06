@@ -12,12 +12,44 @@
                         Click="AddProject_Click" DockPanel.Dock="Right"
                         HorizontalAlignment="Right"/>
             </DockPanel>
-            <TextBlock Text="Manage your versioned project folders" FontSize="13"
+            <TextBlock Text="Manage the folders DeadVault watches, snapshots, and restores." FontSize="13"
                        Foreground="{StaticResource TextSecondary}" Margin="0,6,0,0"/>
+            <TextBlock Name="ProjectsStatusText" Text="Loading projects..."
+                       FontSize="12" Foreground="{StaticResource TextSecondary}" Margin="0,6,0,0"/>
+        </StackPanel>
+
+        <StackPanel Name="EmptyStatePanel" Visibility="Collapsed"
+                    VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Margin="0,40,0,0">
+            <Border Background="{StaticResource CardBg}" CornerRadius="12" Padding="24" Width="520">
+                <StackPanel>
+                    <TextBlock Text="Your timeline starts here" FontSize="22" FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimary}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Add a project folder and DeadVault will keep a local restore timeline for you."
+                               TextWrapping="Wrap" FontSize="13" Foreground="{StaticResource TextSecondary}"
+                               Margin="0,8,0,0" HorizontalAlignment="Center" TextAlignment="Center"/>
+
+                    <Border Background="#111111" CornerRadius="8" Padding="16" Margin="0,18,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Quick Start" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimary}" Margin="0,0,0,10"/>
+                            <TextBlock Text="1. Add the folder you want DeadVault to watch."
+                                       FontSize="12" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+                            <TextBlock Text="2. Make edits normally; DeadVault snapshots them in the background."
+                                       FontSize="12" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+                            <TextBlock Text="3. Open Timeline to diff, restore, export, or tag any saved version."
+                                       FontSize="12" Foreground="{StaticResource TextSecondary}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Button Content="+ Add Your First Project" Style="{StaticResource AccentButton}"
+                            Click="AddProject_Click" HorizontalAlignment="Center" Margin="0,18,0,0"/>
+                </StackPanel>
+            </Border>
         </StackPanel>
 
         <!-- Project List -->
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Name="ProjectsScrollViewer" VerticalScrollBarVisibility="Auto">
             <ItemsControl Name="ProjectsList">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -40,10 +72,22 @@
                                                 Visibility="{Binding IsActive, Converter={StaticResource BoolVis}}">
                                             <TextBlock Text="Watching" FontSize="11" Foreground="#000000" FontWeight="SemiBold"/>
                                         </Border>
+                                        <Border Background="#3B82F6" CornerRadius="4" Padding="8,3"
+                                                Margin="0,0,8,0">
+                                            <TextBlock Text="{Binding CurrentVersionLabel}" FontSize="11"
+                                                       Foreground="#000000" FontWeight="SemiBold"/>
+                                        </Border>
+                                        <Border Background="#FDE68A" CornerRadius="4" Padding="8,3"
+                                                Margin="0,0,8,0">
+                                            <TextBlock Text="{Binding SnapshotCountLabel}" FontSize="11"
+                                                       Foreground="#000000" FontWeight="SemiBold"/>
+                                        </Border>
                                         <TextBlock Text="{Binding StatusText}" FontSize="12"
                                                    Foreground="{StaticResource TextSecondary}"
                                                    VerticalAlignment="Center"/>
                                     </StackPanel>
+                                    <TextBlock Text="{Binding LastSnapshotText}" FontSize="12"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,8,0,0"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="1" Orientation="Horizontal"

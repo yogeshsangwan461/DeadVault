@@ -15,7 +15,9 @@ public partial class VersionPromptWindow : Window
 
         ProjectNameText.Text = projectName;
         CurrentVersionText.Text = $"Current version: {currentVersion}";
-        FilesChangedText.Text = $"{filesChanged} file(s) changed";
+        FilesChangedText.Text = filesChanged > 0
+            ? $"{filesChanged} file(s) changed"
+            : "Choose how to label this version.";
 
         // Show version previews in the named TextBlocks
         SetVersionPreviews(currentVersion);

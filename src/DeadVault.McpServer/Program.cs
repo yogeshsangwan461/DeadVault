@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.Services.AddSingleton<IMetadataStore, JsonMetadataStore>();
+builder.Services.AddSingleton<IRepoManager, RepoManager>();
 builder.Services.AddSingleton<ISnapshotManager, SnapshotManager>();
 builder.Services.AddSingleton<IDiffManager, DiffManager>();
 builder.Services.AddSingleton<ILockManager, LockManager>();

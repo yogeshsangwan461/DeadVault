@@ -90,31 +90,14 @@
             <!-- Attribution -->
             <Border Background="{StaticResource CardBg}" CornerRadius="8" Padding="16" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="Attribution Watermarking" FontSize="14" FontWeight="SemiBold"
+                    <TextBlock Text="MCP Attribution" FontSize="14" FontWeight="SemiBold"
                                Foreground="{StaticResource TextPrimary}" Margin="0,0,0,4"/>
-                    <TextBlock Text="Proof-of-concept metadata for marking changes as human or AI authored."
+                    <TextBlock Text="AI/model attribution is primarily supplied by MCP clients when they create versions. Local app snapshots default to Human."
                                FontSize="12" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,10"/>
-
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBlock Text="Default author:" Width="120"
-                                   Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center"/>
-                        <ComboBox Name="AttributionSelector" Width="180"/>
-                    </StackPanel>
-
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBlock Text="Quick pick:" Width="120"
-                                   Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center"/>
-                        <ComboBox Name="AttributionDetailPresetSelector" Width="240"/>
-                    </StackPanel>
-
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBlock Text="Detail (optional):" Width="120"
-                                   Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center"/>
-                        <TextBox Name="AttributionDetailBox" Width="240" Padding="6,4"
-                                 Background="#1A1A1A" Foreground="{StaticResource TextPrimary}"
-                                 BorderThickness="1" BorderBrush="#333333"/>
-                    </StackPanel>
-                    <TextBlock Text="Examples: gpt-5.4, claude-3.7, local-llama, alice"
+                    <TextBlock Text="When an AI uses the MCP server, it should identify the client and model family so DeadVault can tag the snapshot automatically."
+                               FontSize="12" Foreground="{StaticResource TextSecondary}"
+                               Margin="0,0,0,10"/>
+                    <TextBlock Text="Example MCP metadata: authorKind=ai, clientName=claude-desktop, modelFamily=claude, model=claude-3.7"
                                FontSize="12" Foreground="{StaticResource TextSecondary}"
                                Margin="0,0,0,10"/>
 
@@ -130,12 +113,12 @@
                                Margin="0,0,0,10"/>
 
                     <CheckBox Name="EnableWatermarkingCheck"
-                              Content="Enable deterministic text watermark manifest"
+                              Content="Enable deterministic attribution manifest"
                               Foreground="{StaticResource TextPrimary}" Margin="0,0,0,6"/>
                     <TextBlock Name="AttributionBudgetText"
                                FontSize="12" Foreground="{StaticResource TextSecondary}"/>
 
-                    <Button Content="Save Attribution" Style="{StaticResource SmallButton}"
+                    <Button Content="Save MCP Attribution Settings" Style="{StaticResource SmallButton}"
                             Margin="0,10,0,0" HorizontalAlignment="Left"
                             Click="SaveAttribution_Click"/>
                 </StackPanel>

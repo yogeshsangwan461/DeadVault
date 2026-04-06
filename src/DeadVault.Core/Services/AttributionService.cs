@@ -173,9 +173,31 @@ public class AttributionService
             {
                 return AttributionAuthorKinds.System;
             }
+
+            if (TryGetRequestedAuthor(message, out var requestedAuthor))
+                return requestedAuthor;
         }
 
-        return AttributionAuthorKinds.NormalizeWithDetail(project.AttributionAuthor);
+        return AttributionAuthorKinds.Human;
+    }
+
+    public static bool TryGetRequestedAuthor(string? message, out string author)
+    {
+        author = AttributionAuthorKinds.Unknown;
+        if (string.IsNullOrWhiteSpace(message))
+            return false;
+
+        foreach (var line in message.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var trimmed = line.Trim();
+            if (!trimmed.StartsWith("DeadVault-Requested-Author:", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            author = AttributionAuthorKinds.NormalizeWithDetail(Value(trimmed));
+            return author != AttributionAuthorKinds.Unknown;
+        }
+
+        return false;
     }
 
     private static AttributionManifest LoadManifestFromFile(string path)

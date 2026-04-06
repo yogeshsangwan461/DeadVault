@@ -151,7 +151,7 @@ public class SnapshotManager : ISnapshotManager
         });
     }
 
-    public async Task<List<SnapshotInfo>> ListSnapshotsAsync(ProjectConfig project, int limit = 200)
+    public async Task<List<SnapshotInfo>> ListSnapshotsAsync(ProjectConfig project, int limit = 200, bool includeFileCounts = false)
     {
         return await Task.Run(() =>
         {
@@ -171,8 +171,8 @@ public class SnapshotManager : ISnapshotManager
 
                 foreach (var commit in repo.Commits.Take(limit))
                 {
-                    int filesChanged = 0;
-                    if (commit.Parents.Any())
+                    int filesChanged = -1;
+                    if (includeFileCounts && commit.Parents.Any())
                     {
                         try
                         {
@@ -180,8 +180,9 @@ public class SnapshotManager : ISnapshotManager
                             var changes = repo.Diff.Compare<TreeChanges>(parent.Tree, commit.Tree);
                             filesChanged = changes.Count(change => !AttributionService.IsInternalPath(change.Path));
                         }
-                        catch
+                        catch (Exception ex)
                         {
+                            VaultLogger.Warn($"[{project.Name}] Could not count files for commit {commit.Sha[..8]}: {ex.Message}");
                             filesChanged = -1;
                         }
                     }
@@ -223,6 +224,34 @@ public class SnapshotManager : ISnapshotManager
             }
 
             return snapshots;
+        });
+    }
+
+    public async Task<ProjectSnapshotSummary> GetProjectSummaryAsync(ProjectConfig project)
+    {
+        return await Task.Run(() =>
+        {
+            var summary = new ProjectSnapshotSummary();
+
+            try
+            {
+                using var repo = new Repository(project.FolderPath);
+                var latestCommit = repo.Head.Tip;
+                if (latestCommit == null)
+                    return summary;
+
+                var parsed = VersionManager.ParseCommitMessage(latestCommit.Message);
+                summary.LatestVersion = parsed.version?.ToString();
+                summary.LatestMessage = latestCommit.MessageShort;
+                summary.LatestTimestamp = latestCommit.Author.When.LocalDateTime;
+                summary.SnapshotCount = repo.Commits.Count();
+            }
+            catch (Exception ex)
+            {
+                VaultLogger.Warn($"[{project.Name}] Failed to read project summary: {ex.Message}");
+            }
+
+            return summary;
         });
     }
 

@@ -14,19 +14,6 @@ public partial class SettingsView : UserControl
     private readonly IMetadataStore _store;
     private readonly IRepoManager _repoManager;
     private readonly PipeClient _pipeClient;
-    private static readonly string[] AttributionOptions = { "Human", "AI", "Mixed" };
-    private static readonly string[] AttributionDetailPresets =
-    {
-        "",
-        "gpt-5.4",
-        "gpt-4.1",
-        "claude-3.7",
-        "claude-3.5-sonnet",
-        "gemini-2.5",
-        "copilot",
-        "cursor",
-        "local-llama",
-    };
     private ProjectConfig? _currentProject;
     private List<ProjectConfig> _projects = new();
     private bool _updatingDebounceUi;
@@ -93,18 +80,6 @@ public partial class SettingsView : UserControl
     {
         _projects = await _store.GetAllProjectsAsync();
         ProjectSelector.ItemsSource = _projects.Select(p => p.Name).ToList();
-        AttributionSelector.ItemsSource = AttributionOptions;
-        AttributionDetailPresetSelector.ItemsSource = AttributionDetailPresets;
-
-        AttributionDetailPresetSelector.SelectionChanged += (s, e) =>
-        {
-            if (AttributionDetailPresetSelector.SelectedItem is not string preset)
-                return;
-            if (string.IsNullOrWhiteSpace(preset))
-                return;
-
-            AttributionDetailBox.Text = preset;
-        };
 
         if (_projects.Count > 0)
         {
@@ -153,25 +128,9 @@ public partial class SettingsView : UserControl
         }
 
         UpdateDebounceUi();
-
-        var (authorKind, authorDetail) = AttributionAuthorKinds.Parse(_currentProject.AttributionAuthor);
-        authorKind = AttributionAuthorKinds.NormalizeKind(authorKind);
-
-        AttributionSelector.SelectedItem = authorKind switch
-        {
-            AttributionAuthorKinds.AI => "AI",
-            AttributionAuthorKinds.Mixed => "Mixed",
-            _ => "Human",
-        };
-        AttributionDetailBox.Text = authorDetail ?? string.Empty;
-        AttributionDetailPresetSelector.SelectedItem = AttributionDetailPresets
-            .FirstOrDefault(p => string.Equals(p, authorDetail ?? string.Empty, StringComparison.OrdinalIgnoreCase))
-            ?? AttributionDetailPresets[0];
-
         WatermarkingSourceBox.Text = _currentProject.WatermarkingSource ?? string.Empty;
-
         EnableWatermarkingCheck.IsChecked = _currentProject.EnableTextWatermarking;
-        AttributionBudgetText.Text = $"Text watermark budget: {_currentProject.AttributionTextBudgetBytes / (1024 * 1024)} MB per snapshot";
+        AttributionBudgetText.Text = $"Text attribution budget: {_currentProject.AttributionTextBudgetBytes / (1024 * 1024)} MB per snapshot";
     }
 
     private void UpdateDebounceUi()
@@ -298,15 +257,7 @@ public partial class SettingsView : UserControl
     {
         if (_currentProject == null) return;
 
-        var kind = AttributionSelector.SelectedItem switch
-        {
-            "AI" => AttributionAuthorKinds.AI,
-            "Mixed" => AttributionAuthorKinds.Mixed,
-            _ => AttributionAuthorKinds.Human,
-        };
-        var detail = AttributionDetailBox.Text.Trim();
-        _currentProject.AttributionAuthor = AttributionAuthorKinds.NormalizeWithDetail(
-            string.IsNullOrWhiteSpace(detail) ? kind : $"{kind}:{detail}");
+        _currentProject.AttributionAuthor = AttributionAuthorKinds.Human;
         _currentProject.EnableTextWatermarking = EnableWatermarkingCheck.IsChecked == true;
         _currentProject.WatermarkingSource = WatermarkingSourceBox.Text.Trim();
 
@@ -320,7 +271,7 @@ public partial class SettingsView : UserControl
                 Command = Core.Ipc.IpcMessage.Commands.ReloadConfig
             });
 
-            MessageBox.Show("Attribution settings saved.", "Settings",
+            MessageBox.Show("MCP attribution settings saved. Local app snapshots default to Human, and MCP-created versions can attach AI/client metadata automatically.", "Settings",
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)

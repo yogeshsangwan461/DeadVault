@@ -21,6 +21,8 @@ public class SnapshotInfo
     public int UnknownFiles { get; set; }
     public int WatermarkedFiles { get; set; }
     public long ProcessedTextBytes { get; set; }
+    public bool HasFileCount => FilesChanged >= 0;
+    public string FilesChangedLabel => FilesChanged == 1 ? "1 file" : $"{FilesChanged} files";
 
     public string RelativeTime
     {
