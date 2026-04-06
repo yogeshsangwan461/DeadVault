@@ -1,6 +1,8 @@
 /.vs/
 /.nuget/
 /build/
+/.claude/
+/artifacts/
 /data/index.json
 /data/logs/
 /src/**/bin/
