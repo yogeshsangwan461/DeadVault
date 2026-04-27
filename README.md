@@ -1,42 +1,45 @@
 # DeadVault
 
-Version history for any folder, without making it a Git repo.
+Snapshot-based version history for any folder. No Git required on the watched folder.
 
-DeadVault runs in the background, watches your project folders, and snapshots changes into a hidden timeline. You get fast restore, diffs, and export — and it never touches your actual working Git history. Built mainly for AI-assisted development where you want a safe rollback layer underneath whatever the AI is doing.
+Watches project folders in the background, creates snapshots on file change, and stores them in a hidden internal Git repo. Includes an MCP server so AI tools can create versions, query diffs, and roll back with full attribution metadata.
 
-There's also an MCP server so AI tools like Claude can create versions, inspect diffs, and roll back on their own — with attribution metadata attached so you know what was AI-generated vs human-written.
+## Components
 
-## What's in the repo
-
-- `DeadVault.UI` + `DeadVault.Agent` — the desktop app and background watcher
-- `DeadVault.McpServer` — MCP stdio server for AI tools
-- `DeadVault.Core` / `DeadVault.Store` — snapshot, diff, restore, attribution, and persistence
-- `tests/DeadVault.Tests` — regression tests
+| Component | What it does |
+|---|---|
+| `DeadVault.UI` | Desktop app. Add projects, browse timeline, restore versions. |
+| `DeadVault.Agent` | Background watcher. Auto-snapshots on file change. |
+| `DeadVault.McpServer` | MCP stdio server. Exposes tools to AI clients. |
+| `DeadVault.Core` | Snapshot, diff, restore, attribution logic. |
+| `DeadVault.Store` | JSON persistence layer. |
 
 ## Features
 
-- automatic snapshots on file change (configurable debounce)
-- one-click restore with pre-restore backup
-- diff view, export, tagging, semantic version bumps
-- attribution manifest: tracks which files were human vs AI-written per snapshot
-- MCP server with `create_version`, `query_changes`, `rollback`, and more
-- deterministic watermark (`dvwm1-`) per text file, stored in `.deadvault.attribution.json`
+- Auto-snapshot on file change (configurable debounce)
+- Manual snapshot with version bump (patch / minor / major / dev / custom)
+- One-click restore with automatic pre-restore backup
+- Diff view per commit with per-file line counts
+- Attribution tracking: human vs AI per snapshot and per file
+- `dvwm1-` watermark written to `.deadvault.attribution.json` per changed text file
+- Query snapshots by author kind (`human`, `ai`, `mixed`)
+- MCP server with full tool surface for AI clients
 
 ## Requirements
 
 - Windows
 - .NET 9 SDK
 
-## Running it
+## Build and run
 
 ```powershell
-# full solution build
+# build everything
 .\scripts\build.ps1
 
-# run the UI
+# run the desktop UI
 dotnet run --project src\DeadVault.UI\DeadVault.UI.csproj
 
-# run the background agent separately
+# run the background watcher separately
 dotnet run --project src\DeadVault.Agent\DeadVault.Agent.csproj
 
 # run the MCP server
@@ -46,13 +49,25 @@ dotnet run --project src\DeadVault.McpServer\DeadVault.McpServer.csproj
 ## Quick start
 
 1. Open DeadVault, click **Add Project**, pick a folder.
-2. Make edits. DeadVault snapshots in the background automatically.
-3. Click **Create Version** to snapshot and tag manually.
-4. Open **Timeline** to diff, restore, export, or roll back.
+2. Edit files in the folder. DeadVault snapshots automatically.
+3. Click **Create Version** to tag a snapshot manually.
+4. Open **Timeline** to diff, restore, or export.
 
-## MCP integration
+## MCP setup (Claude Desktop)
 
-Add this to your Claude Desktop config:
+Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "deadvault": {
+      "command": "C:\\path\\to\\DeadVault\\artifacts\\publish\\DeadVault.McpServer\\DeadVault.McpServer.exe"
+    }
+  }
+}
+```
+
+Or using `dotnet run` (slower startup, no build required):
 
 ```json
 {
@@ -69,53 +84,65 @@ Add this to your Claude Desktop config:
 }
 ```
 
-Available tools: `list_projects`, `register_project`, `list_versions`, `get_diff`, `query_changes`, `rollback`, `create_version`.
+## MCP tools
 
-The MCP server is the right surface when you want AI-generated changes to tag themselves. Anything coming through MCP can set `authorKind`, `model`, `modelFamily`, and `clientName` on the version — which DeadVault writes into the commit trailer and the attribution manifest for later querying.
+| Tool | Read-only | Description |
+|---|---|---|
+| `list_projects` | yes | List all registered projects |
+| `register_project` | no | Register a folder and start watching it |
+| `list_versions` | yes | List snapshots for a project |
+| `get_diff` | yes | Get full diff and attribution for a commit |
+| `query_changes` | yes | Filter snapshots by author kind |
+| `rollback` | no | Restore project to a prior snapshot |
+| `create_version` | no | Create a tagged snapshot with bump kind and attribution |
+
+### Attribution metadata on `create_version`
+
+```
+authorKind      "ai" | "human" | "mixed"
+model           model name string (e.g. "claude-opus-4-5")
+modelFamily     "claude" | "gpt" | "gemini" | "cursor" | etc.
+clientName      MCP client identifier
+```
+
+DeadVault writes these into the Git commit trailer and the attribution manifest. Query later with `query_changes(author: "ai")`.
 
 ## Attribution
 
-Local app snapshots default to `human`. MCP clients can pass explicit author metadata. Changed text files get a `dvwm1-` watermark in `.deadvault.attribution.json` — a SHA256 fingerprint of content + path + author kind. You can query by author with `query_changes(author: "ai")` etc.
+Snapshots default to `human` when created from the UI. MCP clients should pass explicit author metadata. Changed text files get a SHA256 watermark stored in `.deadvault.attribution.json`.
 
-This is provenance recording, not tamper-proof signing. It's useful for knowing what happened, not for proving it in court.
-
-## Publishing a release
+## Publish a release
 
 ```powershell
 .\scripts\publish-release.ps1
 ```
 
-Outputs to `artifacts\publish\DeadVault.UI`, `DeadVault.Agent`, and `DeadVault.McpServer`. Package the first two together for a desktop release ZIP.
+Outputs to `artifacts\publish\DeadVault.UI`, `DeadVault.Agent`, and `DeadVault.McpServer`.
 
-## Roadmap
-
-**v1.1 — Connectors**
-- VS Code extension with timeline sidebar and inline restore
-- CLI: `dvault snapshot`, `dvault diff`, `dvault restore`
-- Cursor integration
-
-**v1.2 — Attribution Intelligence**
-- Per-line human/AI attribution in the diff view
-- Attribution history across the full timeline
-
-**v1.3 — Multi-platform**
-- Linux and macOS (remove Windows-only deps)
-- Web dashboard for timeline browsing
-
-**v2.0 — Team Mode**
-- Shared DeadVault server, multi-user attribution
-- GitHub/GitLab sync: push tagged versions as real commits
-
-## Verification
+## Verify
 
 ```powershell
 dotnet build DeadVault.sln -m:1 -p:BuildInParallel=false
 dotnet test DeadVault.sln -m:1 -p:BuildInParallel=false
 ```
 
-## Author
+## Roadmap
 
-Built by [Yogesh Sangwan](https://voluntastech.com).
+**v1.1**
+- VS Code extension with timeline sidebar
+- CLI: `dvault snapshot`, `dvault diff`, `dvault restore`
+- Cursor integration
+
+**v1.2**
+- Per-line human/AI attribution in diff view
+
+**v1.3**
+- Linux and macOS support
+- Web dashboard
+
+**v2.0**
+- Multi-user shared server
+- GitHub/GitLab sync
 
 ## License
 
