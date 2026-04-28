@@ -242,8 +242,13 @@ public class DeadVaultMcpTools
                 Kind = change.Kind.ToString().ToLowerInvariant(),
                 LinesAdded = change.LinesAdded,
                 LinesRemoved = change.LinesRemoved,
+                HumanLines = change.HumanLines,
+                AiLines = change.AiLines,
                 Author = change.AuthorKind,
                 Watermark = change.Watermark,
+                LineRanges = change.LineRanges
+                    .Select(r => new DiffLineRange { StartLine = r.StartLine, EndLine = r.EndLine, Author = r.Author })
+                    .ToList(),
             }).ToList(),
             PatchText = diff.PatchText,
         };
@@ -257,10 +262,44 @@ public class DeadVaultMcpTools
         int limit = 50)
     {
         var project = await ResolveProjectAsync(projectId, projectName);
-        var normalizedAuthor = AttributionAuthorKinds.NormalizeWithDetail(author);
-        var normalizedKind = AttributionAuthorKinds.NormalizeKind(author);
-        var (_, authorDetail) = AttributionAuthorKinds.Parse(author);
-        var matchByKindOnly = string.IsNullOrWhiteSpace(authorDetail);
+
+        // Resolve the query into a canonical prefix for matching.
+        // Supported forms:
+        //   "ai"              → match all AI authors
+        //   "human"           → match all human authors
+        //   "claude"          → bare model family → treated as "ai:claude" prefix
+        //   "ai:claude"       → prefix match on "ai:claude/*"
+        //   "ai:claude/claude-sonnet-4-6" → exact author match
+        var (inputKind, inputDetail) = AttributionAuthorKinds.Parse(author);
+        var normalizedKind = AttributionAuthorKinds.NormalizeKind(inputKind);
+
+        // If the raw input is an unknown kind, it might be a bare model family name like "claude".
+        // Promote it to "ai:{family}" prefix matching.
+        string? resolvedFamily = null;
+        if (normalizedKind == AttributionAuthorKinds.Unknown && string.IsNullOrWhiteSpace(inputDetail))
+        {
+            resolvedFamily = ResolveModelFamily(null, null, inputKind);
+            if (resolvedFamily != null)
+                normalizedKind = AttributionAuthorKinds.AI;
+        }
+
+        // Build the canonical prefix to match against stored author strings.
+        // "ai:claude" matches "ai:claude", "ai:claude/claude-sonnet-4-6", etc.
+        string matchPrefix = normalizedKind;
+        if (resolvedFamily != null)
+            matchPrefix = $"{AttributionAuthorKinds.AI}:{resolvedFamily}";
+        else if (!string.IsNullOrWhiteSpace(inputDetail))
+            matchPrefix = $"{normalizedKind}:{inputDetail.Trim()}";
+
+        bool AuthorMatches(string storedAuthor)
+        {
+            var normalized = AttributionAuthorKinds.NormalizeWithDetail(storedAuthor);
+            // Prefix match: "ai:claude" matches "ai:claude" and "ai:claude/claude-sonnet-4-6"
+            return normalized.Equals(matchPrefix, StringComparison.OrdinalIgnoreCase)
+                || normalized.StartsWith(matchPrefix + "/", StringComparison.OrdinalIgnoreCase)
+                || normalized.StartsWith(matchPrefix + ":", StringComparison.OrdinalIgnoreCase);
+        }
+
         var snapshots = await _snapshotManager.ListSnapshotsAsync(project, Math.Clamp(limit, 1, 200));
 
         var snapshotHits = new List<SnapshotInfo>();
@@ -268,11 +307,7 @@ public class DeadVaultMcpTools
 
         foreach (var snapshot in snapshots)
         {
-            bool snapshotMatch = matchByKindOnly
-                ? string.Equals(AttributionAuthorKinds.NormalizeKind(snapshot.AuthorKind), normalizedKind, StringComparison.OrdinalIgnoreCase)
-                : string.Equals(AttributionAuthorKinds.NormalizeWithDetail(snapshot.AuthorKind), normalizedAuthor, StringComparison.OrdinalIgnoreCase);
-
-            if (snapshotMatch)
+            if (AuthorMatches(snapshot.AuthorKind))
                 snapshotHits.Add(snapshot);
             else
                 needsDiffCheck.Add(snapshot);
@@ -284,9 +319,7 @@ public class DeadVaultMcpTools
 
         var diffHits = needsDiffCheck
             .Zip(diffs, (snapshot, diff) => (snapshot, diff))
-            .Where(pair => matchByKindOnly
-                ? pair.diff.Changes.Any(c => string.Equals(AttributionAuthorKinds.NormalizeKind(c.AuthorKind), normalizedKind, StringComparison.OrdinalIgnoreCase))
-                : pair.diff.Changes.Any(c => string.Equals(AttributionAuthorKinds.NormalizeWithDetail(c.AuthorKind), normalizedAuthor, StringComparison.OrdinalIgnoreCase)))
+            .Where(pair => pair.diff.Changes.Any(c => AuthorMatches(c.AuthorKind)))
             .Select(pair => pair.snapshot);
 
         var matches = snapshotHits.Concat(diffHits)
@@ -308,7 +341,7 @@ public class DeadVaultMcpTools
         {
             ProjectId = project.Id,
             ProjectName = project.Name,
-            Author = normalizedAuthor,
+            Author = matchPrefix,
             Matches = matches,
         };
     }
@@ -716,8 +749,18 @@ public class DiffChangeRecord
     public string Kind { get; set; } = string.Empty;
     public int LinesAdded { get; set; }
     public int LinesRemoved { get; set; }
+    public int HumanLines { get; set; }
+    public int AiLines { get; set; }
     public string Author { get; set; } = AttributionAuthorKinds.Unknown;
     public string? Watermark { get; set; }
+    public List<DiffLineRange> LineRanges { get; set; } = new();
+}
+
+public class DiffLineRange
+{
+    public int StartLine { get; set; }
+    public int EndLine { get; set; }
+    public string Author { get; set; } = AttributionAuthorKinds.Unknown;
 }
 
 public class QueryChangesResult

@@ -37,13 +37,6 @@ public class SnapshotManager : ISnapshotManager
                     .ToList();
 
                 var snapshotAuthor = AttributionService.ResolveSnapshotAuthor(project, message);
-                var attributionSummary = _attributionService.UpdateWorkingTreeManifest(project, changedPaths, snapshotAuthor);
-                if (File.Exists(_attributionService.GetManifestPath(project)) &&
-                    !changedPaths.Contains(AttributionService.ManifestFileName, StringComparer.OrdinalIgnoreCase))
-                {
-                    changedPaths.Add(AttributionService.ManifestFileName);
-                }
-
                 var skippedInvalidPaths = new List<string>();
 
                 foreach (var path in changedPaths)
@@ -73,6 +66,12 @@ public class SnapshotManager : ISnapshotManager
                 if (skippedInvalidPaths.Count > 0)
                 {
                     VaultLogger.Warn($"[{project.Name}] Skipped invalid path(s): {string.Join(", ", skippedInvalidPaths)}");
+                }
+
+                var attributionSummary = _attributionService.UpdateWorkingTreeManifest(project, repo, changedPaths, snapshotAuthor);
+                if (File.Exists(_attributionService.GetManifestPath(project)))
+                {
+                    Commands.Stage(repo, AttributionService.ManifestFileName);
                 }
 
                 var status = repo.RetrieveStatus(new StatusOptions());
@@ -171,8 +170,18 @@ public class SnapshotManager : ISnapshotManager
 
                 foreach (var commit in repo.Commits.Take(limit))
                 {
+                    tagLookup.TryGetValue(commit.Sha, out string? tagName);
+                    var (parsedVersion, parsedKind) = VersionManager.ParseCommitMessage(commit.Message);
+                    var attribution = _attributionService.ParseCommitTrailers(commit.Message);
+
+                    // Use attribution trailers as primary file count source (embedded in every DeadVault commit).
+                    // Fall back to tree diff for commits that pre-date trailers or came from outside DeadVault.
                     int filesChanged = -1;
-                    if (includeFileCounts && commit.Parents.Any())
+                    if (attribution.TotalFiles > 0)
+                    {
+                        filesChanged = attribution.TotalFiles;
+                    }
+                    else if (includeFileCounts && commit.Parents.Any())
                     {
                         try
                         {
@@ -186,10 +195,6 @@ public class SnapshotManager : ISnapshotManager
                             filesChanged = -1;
                         }
                     }
-
-                    tagLookup.TryGetValue(commit.Sha, out string? tagName);
-                    var (parsedVersion, parsedKind) = VersionManager.ParseCommitMessage(commit.Message);
-                    var attribution = _attributionService.ParseCommitTrailers(commit.Message);
 
                     snapshots.Add(new SnapshotInfo
                     {
